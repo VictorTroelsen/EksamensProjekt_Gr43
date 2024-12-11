@@ -34,6 +34,7 @@ public class Bear extends Carnivore {
         // Bjørnen jager, hvis energien er lav
         if (energy <= 50) {
             hunt();
+            eatCarcass(this,location);
         }
 
         // Tjek om bjørnen skal dø

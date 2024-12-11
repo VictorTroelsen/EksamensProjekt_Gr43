@@ -82,6 +82,8 @@ public class Wolf extends Carnivore{
                 } else {
                     // Ingen andre ulve eller alphaer i nærheden? Fortsæt solitaire aktiviteter.
                     System.out.printf("[DEBUG] Wolf #%d is still solo and continues hunting.%n", this.getId());
+                    move();
+                    //moveRandomly();
                     hunt();
                 }
             }
@@ -158,7 +160,12 @@ public class Wolf extends Carnivore{
         }
 
         Set<Wolf> packMembers = wolfPack.getPackMembers(this);
-        packMembers.removeIf(wolf -> !world.contains(wolf)); // Fjern døde eller utilgængelige ulve
+        for (Wolf wolf : packMembers) {
+            if(!world.contains(wolf)) {
+                world.remove(wolf);
+            }
+        }
+        //packMembers.removeIf(wolf -> !world.contains(wolf)); // Fjern døde eller utilgængelige ulve
 
         if (packMembers.isEmpty()) {
             System.out.println("[DEBUG] No pack members left. Alpha Wolf #" + id + " hunting solo.");
@@ -275,7 +282,8 @@ public class Wolf extends Carnivore{
             this.energy += 75;
             System.out.println("Wolf ID #" + id + " ate a bear and gained energy! Current energy: " + energy);
         } else {
-            moveRandomly();
+            move();
+            //moveRandomly();
         }
     }
 

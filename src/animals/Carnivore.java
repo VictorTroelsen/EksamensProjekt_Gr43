@@ -61,7 +61,7 @@ abstract class Carnivore extends Animal {
         }
     }
 
-    private void eatCarcass(Carcass carcass, Location loc) {
+    public void eatCarcass(Carcass carcass, Location loc) {
         System.out.println(this + " is eating a carcass at location: " + loc);
 
         if (carcass instanceof Carcass) {

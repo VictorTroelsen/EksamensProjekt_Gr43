@@ -55,12 +55,21 @@ public class Animal implements Actor {
 
     public void dies() {
         System.out.println("died at location: " + location);
-        world.delete(this);
-        Carcass carcass = createCarcass();
-        if (carcass != null) {
-            world.setTile(location, carcass);
-        }
 
+        // First, remove the animal from the world and clear the tile
+        world.delete(this); // Removes the Rabbit from entities and clears the tile
+
+        // Now create and place the carcass only if it doesn't conflict with the tile
+        Carcass carcass = createCarcass();
+
+        if (carcass != null) {
+            try {
+                world.setTile(location, carcass);
+            } catch (IllegalArgumentException e) {
+                System.out.println("Failed to place carcass: " + e.getMessage());
+                // Optionally handle carcass placement failure (e.g., discard it)
+            }
+        }
     }
 
     protected Carcass createCarcass() {

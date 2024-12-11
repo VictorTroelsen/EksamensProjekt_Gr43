@@ -1,4 +1,5 @@
 /*
+import animals.Rabbit;
 import org.junit.Before;
 
 import org.junit.Test;
@@ -14,7 +15,7 @@ public class RabbitTest {
 
     private World world;
     private Location initialLocation;
-    private Dyr.Rabbit rabbit;
+    private Rabbit rabbit;
     private Program program;
 
     @Before
@@ -30,7 +31,7 @@ public class RabbitTest {
         program = new Program(5,1000,100);
 
         // Initialiser kaninen
-        rabbit = new Dyr.Rabbit(world, initialLocation, program);
+        rabbit = new Rabbit(world, initialLocation, program);
     }
 
     @Test
@@ -83,5 +84,4 @@ public class RabbitTest {
         assertEquals("Dyr.Rabbit's energy should decrease after digging", 10, rabbit.getEnergy());
     }
 }
-
- */
+*/
