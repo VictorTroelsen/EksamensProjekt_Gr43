@@ -3,35 +3,41 @@ package biodiversity;
 import itumulator.executable.DisplayInformation;
 import itumulator.executable.Program;
 import itumulator.simulator.Actor;
+import itumulator.world.Location;
 import itumulator.world.World;
 
 import java.awt.*;
 
-public class Fungi implements Actor {
+public class Fungi{
     private Program program;
     private boolean hasFungi;
     private int spreadingRadius;
+    protected final Location location;
+    protected final World world;
 
 
-    public Fungi(Program program) {
+    public Fungi(Program program, Location location, World world) {
         this.program = program;
         this.hasFungi = false;
         this.spreadingRadius = 3;
+        this.location = location;
+        this.world = world;
+        placeFungi(location);
         updateDisplay();
     }
 
+    private void placeFungi(Location location) {
+        if (world.getTile(location) == null) {
+            world.setTile(location, this);
+        }
+    }
+
     private void updateDisplay() {
-        String imageName = hasFungi ? "carcass" : "carcass-fungi";
-        DisplayInformation displayInformation = new DisplayInformation(Color.GREEN, "fungus");
-        program.setDisplayInformation(Bush.class, displayInformation);
-        System.out.println("Fungus display updated to: " + imageName);
+        DisplayInformation displayInformation = new DisplayInformation(Color.GREEN, "fungi");
+        program.setDisplayInformation(Fungi.class, displayInformation);
     }
 
-    public void act(World world) {
-    }
 
-    public void hastenDecomposition(Carcass carcass) {
-        int decompositionRate = 5;
-    }
+
 
 }

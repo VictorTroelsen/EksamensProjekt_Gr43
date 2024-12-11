@@ -1,10 +1,11 @@
 package biodiversity;
 
+import itumulator.executable.DisplayInformation;
 import itumulator.world.Location;
 import itumulator.world.World;
 import itumulator.executable.Program;
-import itumulator.executable.DisplayInformation;
-import java.awt.*;
+
+import java.awt.Color;
 
 public class NormalCarcass extends Carcass {
     private final Program program;
@@ -16,7 +17,7 @@ public class NormalCarcass extends Carcass {
     }
 
     private void updateDisplay() {
-        DisplayInformation displayInfo = new DisplayInformation(Color.DARK_GRAY, "carcass");
+        DisplayInformation displayInfo = new DisplayInformation(Color.ORANGE, "carcass");
         program.setDisplayInformation(NormalCarcass.class, displayInfo);
     }
 }

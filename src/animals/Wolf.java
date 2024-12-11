@@ -42,35 +42,58 @@ public class Wolf extends Carnivore{
 
         System.out.println("[DEBUG] Wolf #" + this.getId() + " starting act. Energy: " + this.getEnergy());
 
-        // Natlige aktiviteter
-        if (world.isNight()) {
-            System.out.println("[DEBUG] It's night. Wolf #" + this.getId() + " is acting accordingly.");
-
-            if (wolfPack != null && wolfPack.hasDen() && wolfPack.isAlpha(this)) {
-                WolfDen den = wolfPack.getDen();
-
-                // Alpha sørger for, at ulvene restituerer tæt på hulen
-                den.restNearDen();
-
-                // Alpha forsøger at reproducere i nærheden af hulen
-                den.reproduce();
-            }
-            decreaseEnergy(); // Energi falder lidt om natten
-            return; // Spring dagens handlinger over
-        }
-
-        // Daglige aktiviteter (tilføjelse til eksisterende logik)
         if (this.wolfPack == null) {
-            System.out.println("[DEBUG] Wolf #" + this.getId() + " has no pack, continuing solo activities.");
-            hunt(); // Individuel handling
+            System.out.println("[DEBUG] Wolf #" + this.getId() + " has no pack, trying to find or form one.");
+
+            // Forsøg at finde andre nærliggende ulve
+            Set<Location> nearbyLocations = world.getSurroundingTiles(world.getLocation(this), 3);
+            Set<Wolf> nearbyWolves = world.getAll(Wolf.class, nearbyLocations);
+
+            // Find alphaulve i nærheden
+            Wolf nearbyAlpha = nearbyWolves.stream()
+                    .filter(wolf -> wolf.wolfPack != null && wolf.wolfPack.isAlpha(wolf))
+                    .findFirst()
+                    .orElse(null);
+
+            if (nearbyAlpha != null) {
+                // Hvis der findes en eksisterende alpha, tilslut pakkens alpha
+                System.out.printf("[DEBUG] Wolf #%d found an alpha (Wolf #%d) and joined their pack.%n", this.getId(), nearbyAlpha.getId());
+                nearbyAlpha.wolfPack.addToPack(nearbyAlpha, this);
+                this.wolfPack = nearbyAlpha.wolfPack;
+            } else {
+                // Ingen alpha? Find og opret en pack med nærliggende solo-ulve
+                Set<Wolf> nearbySoloWolves = nearbyWolves.stream()
+                        .filter(wolf -> wolf.wolfPack == null && wolf != this)
+                        .collect(java.util.stream.Collectors.toSet());
+
+                if (!nearbySoloWolves.isEmpty()) {
+                    // Skab en fælles pack med de nærliggende solo-ulve
+                    this.wolfPack = new WolfPack();
+                    this.wolfPack.createPack(this); // 'this' bliver alpha
+                    System.out.printf("[DEBUG] Wolf #%d created a new pack and is now the alpha.%n", this.getId());
+
+                    for (Wolf soloWolf : nearbySoloWolves) {
+                        this.wolfPack.addToPack(this, soloWolf);
+                        soloWolf.wolfPack = this.wolfPack;
+                        System.out.printf("[DEBUG] Wolf #%d joined pack led by Alpha Wolf #%d.%n", soloWolf.getId(), this.getId());
+                    }
+                } else {
+                    // Ingen andre ulve eller alphaer i nærheden? Fortsæt solitaire aktiviteter.
+                    System.out.printf("[DEBUG] Wolf #%d is still solo and continues hunting.%n", this.getId());
+                    hunt();
+                }
+            }
         } else if (wolfPack.isAlpha(this)) {
+            // Hvis ulven er alpha, udfør alpha-specifik adfærd
             System.out.println("[DEBUG] Wolf #" + this.getId() + " is alpha, acting as alpha.");
             actAsAlpha();
         } else {
-            hunt(); // Ikke-alpha ulve jager solo
+            // Hvis ulven er i en pack, men ikke alpha, udfører den jagt
+            System.out.printf("[DEBUG] Wolf #%d is part of a pack but not alpha. Hunting solo.%n", this.getId());
+            hunt();
         }
 
-        decreaseEnergy();
+        decreaseEnergy(); // Reducer energi ved slutningen af handlingen
         System.out.println("[DEBUG] Wolf #" + this.getId() + " finished act.");
     }
 
@@ -125,7 +148,7 @@ public class Wolf extends Carnivore{
         if (!packMembers.isEmpty()) {
             System.out.println("Alpha Wolf #" + id + " is hunting with " + packMembers.size() + " pack members!");
 
-            Location currentLocation = world.getLocation(this);
+            Location currentLocation = world.getCurrentLocation();
             Set<Location> tiles = world.getSurroundingTiles(currentLocation, 5); // Udvid radius
             Set<Bear> bears = world.getAll(Bear.class, tiles);
 
@@ -145,7 +168,7 @@ public class Wolf extends Carnivore{
 
     private Location calculateNewLocation() {
         // Simuler en bevægelse i en ny retning
-        Location currentLocation = world.getLocation(this);
+        Location currentLocation = world.getCurrentLocation();
         Set<Location> nearbyEmpty = world.getEmptySurroundingTiles(currentLocation);
         return nearbyEmpty.stream().findFirst().orElse(currentLocation); // Flyt til en tilfældig ledig lokation
     }
@@ -203,7 +226,7 @@ public class Wolf extends Carnivore{
     protected void hunt() {
         System.out.println("Wolf ID #" + id + " is hunting...");
 
-        Location location = world.getLocation(this);
+        Location location = world.getCurrentLocation();
 
         Set<Location> surroundingTiles = world.getSurroundingTiles(location, 3);
 
@@ -236,7 +259,7 @@ public class Wolf extends Carnivore{
     }
 
     private void moveRandomly() {
-        Set<Location> emptyLocations = world.getEmptySurroundingTiles(world.getLocation(this));
+        Set<Location> emptyLocations = world.getEmptySurroundingTiles(world.getCurrentLocation());
         if (!emptyLocations.isEmpty()) {
             // Flyt til en tilfældig lokation
             Location newLocation = emptyLocations.iterator().next(); // Tag en tilfældig ledig position

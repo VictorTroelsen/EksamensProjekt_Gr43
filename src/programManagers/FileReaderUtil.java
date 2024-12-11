@@ -11,14 +11,12 @@ import java.awt.Color;
 
 import actions.WolfDen;
 //import actions.WolfDenPrøve;
-import actions.WolfPack;
 import animals.Bear;
 import animals.Wolf;
 //import animals.WolfPrøve;
 import animals.Rabbit;
 import actions.RabbitHole;
-import biodiversity.Bush;
-import biodiversity.Grass;
+import biodiversity.*;
 import itumulator.executable.DisplayInformation;
 import itumulator.executable.Program;
 import itumulator.world.Location;
@@ -60,8 +58,8 @@ public class FileReaderUtil {
             p.setDisplayInformation(Wolf.class, new DisplayInformation(Color.BLUE, "wolf"));
             p.setDisplayInformation(WolfDen.class, new DisplayInformation(Color.BLACK, "hole"));
             p.setDisplayInformation(Bush.class, new DisplayInformation(Color.PINK, "bush"));
-            p.setDisplayInformation(SmallCarcass.class, new DisplayInformation(Color.ORANGE, "carcass-small"));
-            p.setDisplayInformation(NormalCarcass.class, new DisplayInformation(Color.DARK_GRAY, "carcass"));
+            p.setDisplayInformation(Carcass.class, new DisplayInformation(Color.DARK_GRAY, "carcass"));
+            p.setDisplayInformation(Fungi.class, new DisplayInformation(Color.YELLOW, "fungi"));
 
             logWorldState(w, "Initial world state");
 
@@ -70,35 +68,46 @@ public class FileReaderUtil {
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split("\\s+");
                 if (parts.length >= 2) {
-                    String type = parts[0];
                     try {
-                        // Kontrollér om koordinaterne findes i `parts[1]`
-                        if (parts[1].matches("\\d+") && parts.length > 2 && parts[2].matches("\\(\\d+,\\d+\\)")) {
-                            String[] coords = parts[2].replaceAll("[()]", "").split(",");
-                            int x = Integer.parseInt(coords[0]);
-                            int y = Integer.parseInt(coords[1]);
-                            addElementsToWorld(type, 1, p, x, y);
+                        // Find typen ved at inkludere alle ord før den første numeriske værdi
+                        StringBuilder typeBuilder = new StringBuilder();
+                        int i = 0;
+                        while (i < parts.length && !parts[i].matches("\\d+.*")) {
+                            if (typeBuilder.length() > 0) {
+                                typeBuilder.append(" ");
+                            }
+                            typeBuilder.append(parts[i]);
+                            i++;
                         }
-                        // Hvis koordinaterne er inden i `parts[1]`
-                        else if (parts[1].matches("\\(\\d+,\\d+\\)")) {
-                            String[] coords = parts[1].replaceAll("[()]", "").split(",");
-                            int x = Integer.parseInt(coords[0]);
-                            int y = Integer.parseInt(coords[1]);
-                            addElementsToWorld(type, 1, p, x, y);
-                        }
-                        else {
-                            // Håndterer antals- og interval-strenge tilfælde
-                            String value = parts[1];
-                            if (value.contains("-")) {
-                                String[] range = parts[1].split("-");
+                        String type = typeBuilder.toString(); // Samlet type (f.eks. "carcass fungi")
+
+                        if (i < parts.length) {
+                            // Hvis resten matcher koordinater eller intervaller
+                            String value = parts[i];
+
+                            // Hvis der er koordinater på et specifikt sted
+                            if (value.matches("\\(\\d+,\\d+\\)")) {
+                                String[] coords = value.replaceAll("[()]", "").split(",");
+                                int x = Integer.parseInt(coords[0]);
+                                int y = Integer.parseInt(coords[1]);
+                                addElementsToWorld(type, 1, p, x, y);
+
+                            } else if (value.contains("-")) { // Hvis det er et interval
+                                String[] range = value.split("-");
                                 int minValue = Integer.parseInt(range[0]);
                                 int maxValue = Integer.parseInt(range[1]);
                                 int count = minValue + new Random().nextInt(maxValue - minValue + 1);
                                 addElementsToWorld(type, count, p);
-                            } else {
-                                int count = Integer.parseInt(parts[1]);
+
+                            } else if (value.matches("\\d+")) { // Hvis det er et simpelt antal
+                                int count = Integer.parseInt(value);
                                 addElementsToWorld(type, count, p);
+
+                            } else {
+                                System.err.println("Unexpected format in line: " + line);
                             }
+                        } else {
+                            System.err.println("Type found, but no numeric value or coordinates: " + line);
                         }
                     } catch (NumberFormatException e) {
                         System.err.println("Invalid number format in line: " + line);
@@ -155,6 +164,10 @@ public class FileReaderUtil {
                         case "berry":
                             Bush bush = new Bush(w, location,p);
                             //actorManager.addActor(bush, location);
+                            addedCount++;
+                            break;
+                        case "carcass fungi":
+                            Fungi fungi = new Fungi(p,location,w);
                             addedCount++;
                             break;
                         case "bear":
