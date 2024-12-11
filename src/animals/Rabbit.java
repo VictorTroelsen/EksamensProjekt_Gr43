@@ -1,7 +1,9 @@
 package animals;
 
 import actions.RabbitHole;
+import biodiversity.Carcass;
 import biodiversity.Grass;
+import biodiversity.SmallCarcass;
 import itumulator.executable.DisplayInformation;
 import itumulator.world.Location;
 import itumulator.world.NonBlocking;
@@ -61,6 +63,12 @@ public class Rabbit extends Animal {//implements Actor {
                 digHole();
             }
         }
+    }
+
+    @Override
+    protected Carcass createCarcass() {
+        System.out.println(toString() + " turning into a small carcass.");
+        return new SmallCarcass(world, location, program);
     }
 
     private void updateEnergyRabbit() {

@@ -7,10 +7,11 @@ import itumulator.executable.DisplayInformation;
 import java.awt.*;
 
 public class SmallCarcass extends Carcass {
+    private static final int SMALL_CARCASS_NOURISHMENT = 10;
 
 
     public SmallCarcass(World world, Location location, Program program) {
-        super(world, location,program);
+        super(world, location,program, SMALL_CARCASS_NOURISHMENT, false);
         updateDisplay();
     }
     @Override

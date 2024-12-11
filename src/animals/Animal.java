@@ -1,5 +1,6 @@
 package animals;
 
+import biodiversity.Carcass;
 import itumulator.executable.Program;
 import itumulator.simulator.Actor;
 import itumulator.world.Location;
@@ -55,8 +56,16 @@ public class Animal implements Actor {
     public void dies() {
         System.out.println("died at location: " + location);
         world.delete(this);
+        Carcass carcass = createCarcass();
+        if (carcass != null) {
+            world.setTile(location, carcass);
+        }
 
+    }
 
+    protected Carcass createCarcass() {
+        // Base implementation opretter ingen Carcass
+        return null;
     }
 
     /**

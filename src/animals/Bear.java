@@ -1,6 +1,8 @@
 package animals;
 
 import biodiversity.Bush;
+import biodiversity.Carcass;
+import biodiversity.NormalCarcass;
 import itumulator.executable.Program;
 import itumulator.world.Location;
 import itumulator.world.World;
@@ -69,6 +71,12 @@ public class Bear extends Carnivore {
         } else {
             System.out.println("Bear could not find a valid move.");
         }
+    }
+
+    @Override
+    protected Carcass createCarcass() {
+        System.out.println(toString() + " turning into a large carcass.");
+        return new NormalCarcass(world, location, program,false); // Eller en ny specific Carcass-type
     }
 
     private boolean isWithinTerritory(Location location) {

@@ -8,9 +8,10 @@ import itumulator.executable.Program;
 import java.awt.Color;
 
 public class NormalCarcass extends Carcass {
+    private static final int NORMAL_CARCASS_NOURISHMENT = 25;
 
-    public NormalCarcass(World world, Location location, Program program) {
-        super(world, location,program);
+    public NormalCarcass(World world, Location location, Program program, boolean autoPlace) {
+        super(world, location,program, NORMAL_CARCASS_NOURISHMENT, autoPlace);
         updateDisplay();
     }
     @Override

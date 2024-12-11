@@ -1,5 +1,6 @@
 package animals;
 
+import biodiversity.Carcass;
 import itumulator.executable.Program;
 import itumulator.world.Location;
 import itumulator.world.NonBlocking;
@@ -21,27 +22,52 @@ abstract class Carnivore extends Animal {
     public abstract void act(World world);
 
     protected void hunt() {
-        // Hent omkringliggende felter i nærheden af ulvens nuværende position
+        // Få omkringliggende felter i nærheden af rovdyrets position
         Set<Location> surroundingTiles = world.getSurroundingTiles(location, program.getSize() / 5);
         for (Location loc : surroundingTiles) {
-            Object prey = world.getTile(loc); // Få objektet på den nuværende position
-            //System.out.println("Checking location: " + loc + " for prey.");
-            if (prey instanceof Rabbit && canHunt(prey)) { // Tjek om byttet er en kanin og kan jages
-                System.out.println(this + " found rabbit to hunt at location: " + loc);
-                try {
-                    world.delete(prey); // Fjern kaninen fra verdenen
-                    System.out.println("Rabbit at location " + loc + " has been eaten and deleted.");
+            Object prey = world.getTile(loc); // Få objektet på feltet
 
-                    // Flyt ulven til den nu ledige position
-                    world.move(this, loc); // Brug move() til at flytte ulven
-                    location = loc; // Opdater ulvens interne placering
-                    energy += 50; // Tilføj energi efter at have spist byttet
-                    System.out.println(this + " moved to location " + loc + " after eating.");
+            // Tjek om det er bytte, der kan jages
+            if (prey instanceof Animal && canHunt(prey)) {
+                System.out.println(this + " found prey to hunt at location: " + loc);
+
+                try {
+                    // Lad byttet dø først
+                    ((Animal) prey).dies();
+
+                    // Tjek og flyt rovdyret til en nærliggende, ledig position
+                    Location emptyTile = findEmptyAdjacentLocation();
+                    if (emptyTile != null) {
+                        world.move(this, emptyTile);
+                        location = emptyTile; // Opdater rovdyrets interne position
+                    } else {
+                        // Hvis der ikke findes et ledigt felt, bliver rovdyret stående
+                        System.out.println(this + " could not move after killing prey, no adjacent empty location found.");
+                    }
+
+                    // Hent det nyoprettede ådsel fra feltet
+                    Object carcass = world.getTile(loc);
+
+                    // Spis ådslet for at øge energi
+                    if (carcass instanceof Carcass) {
+                        eatCarcass((Carcass) carcass, loc);
+                    }
+
+                    break; // Afslut loopet efter vellykket jagt
                 } catch (IllegalArgumentException e) {
-                    System.err.println("Error occurred while hunting for " + this + " at location: " + loc + ". " + e.getMessage());
+                    System.err.println("Error occurred while hunting: " + e.getMessage());
                 }
-                break; // Afslut loopet efter vellykket jagt
             }
+        }
+    }
+
+    private void eatCarcass(Carcass carcass, Location loc) {
+        System.out.println(this + " is eating a carcass at location: " + loc);
+
+        if (carcass instanceof Carcass) {
+            energy += carcass.getNourishment(); // Tilføj energi fra ådslet
+            world.delete(carcass); // Fjern ådslet fra verdenen
+            System.out.println(this + " has eaten the carcass and now has energy: " + energy);
         }
     }
 }

@@ -11,15 +11,18 @@ public abstract class Carcass {
     protected boolean isDecomposed;
     protected int decompositionTime;
     private static final int MAX_DECOMPOSITION_TIME = 5;
+    private final int nourishment;
 
-    public Carcass(World world, Location location, Program program) {
+    public Carcass(World world, Location location, Program program, int nourishment, boolean autoPlace) {
         this.world = world;
         this.location = location;
         this.decompositionTime = MAX_DECOMPOSITION_TIME;
         this.isDecomposed = false;
         this.program = program;
-
-        placeCarcass(location);
+        this.nourishment = nourishment;
+        if (autoPlace) {
+            placeCarcass(location);
+        }
         updateDisplay();
     }
 
@@ -42,6 +45,10 @@ public abstract class Carcass {
     private void decompose() {
         isDecomposed = true;
         world.setTile(location, null); // Fjern ådselet fra verden
+    }
+
+    public int getNourishment() {
+        return nourishment;
     }
 
     // Skal implementeres af underklasser for unikt display

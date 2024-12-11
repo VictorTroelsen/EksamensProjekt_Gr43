@@ -67,54 +67,56 @@ public class WolfPack {
             throw new IllegalArgumentException("Alpha, location, or world cannot be null");
         }
 
+        // Check if alpha exists in the world
         if (!world.contains(alpha)) {
-            throw new IllegalArgumentException("Alpha is not on the map");
+            System.out.println("[ERROR] Alpha Wolf #" + alpha.getId() + " not found on the map.");
+            return;
         }
 
-        // Check if the destination location is valid for the alpha
+        // Check if the new location is valid
         if (!world.isTileEmpty(newLocation)) {
             System.out.println("[DEBUG] Cannot move pack led by Alpha Wolf #" + alpha.getId() + " to " + newLocation
                     + ": Target tile is occupied.");
-            return; // Skip moving the pack if the destination is not valid
+            return;
         }
 
-        // Get the pack members
-        Set<Wolf> packMembers = getPackMembers(alpha);
-
-        // Fjern ulve, der ikke længere eksisterer i verden
-        packMembers.removeIf(wolf -> !world.contains(wolf));
-
-        // Flyt flokkens medlemmer én ad gangen
-        for (Wolf wolf : packMembers) {
-            if (world.contains(wolf)) { // Check, at ulven stadig eksisterer
-                try {
-                    Location currentLocation = world.getLocation(wolf); // Valider, at vi kan hente lokationen
-                    Location followLocation = calculateFollowLocation(currentLocation, newLocation, world);
-
-                    if (followLocation != null) {
-                        world.move(wolf, followLocation);
-                        System.out.println("[DEBUG] Moved Wolf #" + wolf.getId() + " to " + followLocation);
-                    } else {
-                        System.out.println("[DEBUG] Could not find valid location to move Wolf #" + wolf.getId());
-                    }
-                } catch (IllegalArgumentException e) {
-                    System.out.println("[DEBUG] Failed to move Wolf #" + wolf.getId() + ": " + e.getMessage());
-                }
-            }
-        }
-
-        // Flyt alpha til den ønskede nye position
+        // Flyt alpha-ulven
         try {
             world.move(alpha, newLocation);
             System.out.println("[DEBUG] Moved Alpha Wolf #" + alpha.getId() + " to " + newLocation);
         } catch (IllegalArgumentException e) {
-            System.out.println("[DEBUG] Failed to move Alpha Wolf #" + alpha.getId() + ": " + e.getMessage());
+            System.out.println("[ERROR] Failed to move Alpha Wolf #" + alpha.getId() + ": " + e.getMessage());
+            return; // Stop handlingen her, da alpha ikke kan flyttes
         }
 
-        // Hvis flokken bliver tom, opløses den
+        // Flyt de øvrige pakkemedlemmer
+        Set<Wolf> packMembers = getPackMembers(alpha);
+        packMembers.removeIf(wolf -> !world.contains(wolf)); // Fjern ulve, der ikke findes i kortet
+
+        for (Wolf wolf : packMembers) {
+            if (!world.contains(wolf)) {
+                continue; // Spring ulve uden gyldig status over
+            }
+
+            Location currentLocation = world.getLocation(wolf);
+            Location followLocation = calculateFollowLocation(currentLocation, newLocation, world);
+
+            if (followLocation != null && world.isTileEmpty(followLocation)) {
+                try {
+                    world.move(wolf, followLocation);
+                    System.out.println("[DEBUG] Moved Pack Member Wolf #" + wolf.getId() + " to " + followLocation);
+                } catch (IllegalArgumentException e) {
+                    System.out.println("[ERROR] Failed to move Pack Member Wolf #" + wolf.getId() + ": " + e.getMessage());
+                }
+            } else {
+                System.out.println("[DEBUG] No valid location found for Wolf #" + wolf.getId());
+            }
+        }
+
+        // Hvis alle pack-medlemmer fejlede, markér flokken som opløst
         if (packMembers.isEmpty()) {
+            System.out.println("[DEBUG] All pack members are unavailable, disbanding the pack.");
             disbandPack(alpha);
-            System.out.println("[DEBUG] The pack led by Alpha Wolf #" + alpha.getId() + " has been disbanded.");
         }
     }
 

@@ -1,6 +1,8 @@
 package animals;
 
 import actions.WolfDen;
+import biodiversity.Carcass;
+import biodiversity.NormalCarcass;
 import itumulator.executable.Program;
 import itumulator.world.Location;
 import itumulator.world.World;
@@ -110,17 +112,25 @@ public class Wolf extends Carnivore{
         // Første tjek: Er alpha stadig i verdenen?
         if (!world.contains(this)) {
             System.out.println("[DEBUG] Alpha Wolf #" + id + " is no longer in the world. Skipping movePack.");
-            return; // Afbryd handlingen, hvis ulven ikke længere er i verdenen
+            return;
         }
 
-        // Hvis ingen WolfDen eksisterer for flokken, opret en ny hule på den nuværende placering
+        // Hvis ingen WolfDen eksisterer for flokken, opret en ny hule
         if (wolfPack != null && !wolfPack.hasDen()) {
             createDenForPack(); // Opret hulen
         }
 
         // Flyt flokken til en ny lokation
         Location newLocation = calculateNewLocation();
+        System.out.println("[DEBUG] Alpha Wolf #" + id + " attempting to move pack to: " + newLocation);
+
         wolfPack.movePack(this, newLocation, world);
+
+        // Valider igen: Hvis alpha fejlede at flytte, skal "huntWithPack()" ikke kaldes
+        if (!world.contains(this)) {
+            System.out.println("[ERROR] Alpha Wolf #" + id + " failed to move. Aborting pack hunt.");
+            return;
+        }
 
         // Flokken udfører en fælles jagt
         huntWithPack();
@@ -142,27 +152,34 @@ public class Wolf extends Carnivore{
     }
 
     private void huntWithPack() {
+        if (!world.contains(this)) {
+            System.out.println("[ERROR] Alpha Wolf #" + id + " is not on the map. Aborting huntWithPack.");
+            return;
+        }
+
         Set<Wolf> packMembers = wolfPack.getPackMembers(this);
+        packMembers.removeIf(wolf -> !world.contains(wolf)); // Fjern døde eller utilgængelige ulve
 
-        // Jagt sammen med flokken: prioritér større bytte som bjørne
-        if (!packMembers.isEmpty()) {
-            System.out.println("Alpha Wolf #" + id + " is hunting with " + packMembers.size() + " pack members!");
+        if (packMembers.isEmpty()) {
+            System.out.println("[DEBUG] No pack members left. Alpha Wolf #" + id + " hunting solo.");
+            hunt();
+            return;
+        }
 
-            Location currentLocation = world.getCurrentLocation();
-            Set<Location> tiles = world.getSurroundingTiles(currentLocation, 5); // Udvid radius
-            Set<Bear> bears = world.getAll(Bear.class, tiles);
+        System.out.println("Alpha Wolf #" + id + " is hunting with " + packMembers.size() + " pack members!");
 
-            if (!bears.isEmpty() && packMembers.size() >= 3) { // Minimum 3 ulve til flokken for at angribe bjørn
-                Bear bear = bears.iterator().next(); // Første bjørn
-                world.remove(bear); // Fjern bjørnen fra verden
-                this.energy += 100; // Alpha får mere energi
-                System.out.println("Wolf Pack led by #" + id + " hunted a bear!");
-            } else {
-                System.out.println("Not enough wolves to hunt larger prey. Continuing individual hunts...");
-                hunt(); // Fallback til individuel jagt
-            }
+        Location alphaLocation = world.getLocation(this);
+        Set<Location> tiles = world.getSurroundingTiles(alphaLocation, 5);
+        Set<Bear> bears = world.getAll(Bear.class, tiles);
+
+        if (!bears.isEmpty() && packMembers.size() >= 3) {
+            Bear bear = bears.iterator().next();
+            world.remove(bear);
+            this.energy += 100;
+            System.out.println("Wolf Pack led by #" + id + " hunted a bear!");
         } else {
-            hunt(); // Ingen pack = individuel jagt
+            System.out.println("Not enough wolves to hunt larger prey. Continuing individual hunts...");
+            packMembers.forEach(Wolf::hunt);
         }
     }
 
@@ -178,7 +195,7 @@ public class Wolf extends Carnivore{
 
         if (this.energy <= 0) {
             System.out.println("Wolf #" + id + " has died due to exhaustion.");
-            world.remove(this); // Fjern ulven fra verdenen
+            dies(); // Fjern ulven fra verdenen
 
             if (wolfPack != null && wolfPack.isAlpha(this)) { // Kontroller, om wolfPack ikke er null
                 Set<Wolf> packMembers = wolfPack.getPackMembers(this);
@@ -200,6 +217,12 @@ public class Wolf extends Carnivore{
                 System.out.println("Wolf #" + id + " has no wolfPack or is not the alpha.");
             }
         }
+    }
+
+    @Override
+    protected Carcass createCarcass() {
+        System.out.println(toString() + " turning into a carcass.");
+        return new NormalCarcass(world, location, program,false);
     }
 
     public int getId() {
@@ -224,6 +247,11 @@ public class Wolf extends Carnivore{
 
     @Override
     protected void hunt() {
+        if (!world.contains(this)) {
+            System.out.println("[ERROR] Wolf ID #" + id + " is not on the map. Aborting hunt.");
+            return;
+        }
+
         System.out.println("Wolf ID #" + id + " is hunting...");
 
         Location location = world.getCurrentLocation();
@@ -236,26 +264,19 @@ public class Wolf extends Carnivore{
 
         Set<Wolf> wolves = world.getAll(Wolf.class, surroundingTiles);
 
-        if(!rabbits.isEmpty()) {
+        if (!rabbits.isEmpty()) {
             Rabbit rabbit = rabbits.iterator().next();
-            Location rabbitLocation = world.getLocation(rabbit);
             world.remove(rabbit);
             this.energy += 50;
             System.out.println("Wolf ID #" + id + " ate a rabbit and gained energy! Current energy: " + energy);
-        }
-
-        else if (!bears.isEmpty() && wolves.size() >= 3) {
+        } else if (!bears.isEmpty() && wolves.size() >= 3) {
             Bear bear = bears.iterator().next();
-            Location bearLocation = world.getLocation(bear);
             world.remove(bear);
             this.energy += 75;
             System.out.println("Wolf ID #" + id + " ate a bear and gained energy! Current energy: " + energy);
-        }
-
-        else {
+        } else {
             moveRandomly();
         }
-
     }
 
     private void moveRandomly() {
