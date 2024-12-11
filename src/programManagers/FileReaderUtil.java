@@ -58,7 +58,8 @@ public class FileReaderUtil {
             p.setDisplayInformation(Wolf.class, new DisplayInformation(Color.BLUE, "wolf"));
             p.setDisplayInformation(WolfDen.class, new DisplayInformation(Color.BLACK, "hole"));
             p.setDisplayInformation(Bush.class, new DisplayInformation(Color.PINK, "bush"));
-            p.setDisplayInformation(Carcass.class, new DisplayInformation(Color.DARK_GRAY, "carcass"));
+            p.setDisplayInformation(SmallCarcass.class, new DisplayInformation(Color.DARK_GRAY, "small-carcass"));
+            p.setDisplayInformation(NormalCarcass.class, new DisplayInformation(Color.DARK_GRAY, "carcass"));
             p.setDisplayInformation(Fungi.class, new DisplayInformation(Color.YELLOW, "fungi"));
 
             logWorldState(w, "Initial world state");
