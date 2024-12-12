@@ -1,16 +1,17 @@
 package biodiversity;
 
 import itumulator.executable.Program;
+import itumulator.simulator.Actor;
 import itumulator.world.Location;
 import itumulator.world.World;
 
-public abstract class Carcass {
+public abstract class Carcass implements Actor {
     protected final Location location;
     protected final World world;
-    protected final Program program;
-    protected boolean isDecomposed;
+    Program program;
+    public boolean isDecomposed;
     protected int decompositionTime;
-    private static final int MAX_DECOMPOSITION_TIME = 5;
+    private static final int MAX_DECOMPOSITION_TIME = 10;
     private final int nourishment;
 
     public Carcass(World world, Location location, Program program, int nourishment, boolean autoPlace) {
@@ -32,8 +33,8 @@ public abstract class Carcass {
             world.setTile(location, this);
         }
     }
-
-    public void act() {
+    @Override
+    public void act(World world) {
         if (!isDecomposed) {
             decompositionTime--;
             if (decompositionTime <= 0) {
@@ -44,10 +45,11 @@ public abstract class Carcass {
 
     private void decompose() {
         isDecomposed = true;
-        world.setTile(location, null); // Fjern ådselet fra verden
+        world.delete(this); // Fjern ådselet fra verden
     }
 
     public int getNourishment() {
+        System.out.println("Carcass nourishment value: " + nourishment);
         return nourishment;
     }
 

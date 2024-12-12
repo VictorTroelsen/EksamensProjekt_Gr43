@@ -14,6 +14,7 @@ public class WolfDen implements NonBlocking {
     private final Location denLocation;
     private final World world;
     private final WolfPack wolfPack;
+    Program program;
 
 
     public WolfDen(World world, Location location, WolfPack pack, Program program) {
@@ -23,6 +24,7 @@ public class WolfDen implements NonBlocking {
         this.world = world;
         this.denLocation = location;
         this.wolfPack = pack;
+        this.program = program;
 
         DisplayInformation displayInformation = new DisplayInformation(Color.DARK_GRAY, "hole");
         program.setDisplayInformation(WolfDen.class, displayInformation);
@@ -42,7 +44,7 @@ public class WolfDen implements NonBlocking {
 
 
     // Reproduktion i hulen
-    public void reproduce() {
+    public void reproduce(int energyRequirement, int maxPackSize, int minAgeForReproduction) {
         // Find ulve tæt på hulen
         Set<Location> nearbyLocations = world.getSurroundingTiles(denLocation, 3);
         Set<Wolf> nearbyWolves = world.getAll(Wolf.class, nearbyLocations);
@@ -52,25 +54,42 @@ public class WolfDen implements NonBlocking {
         Wolf mate = null;
 
         for (Wolf wolf : nearbyWolves) {
-            if (wolfPack.isAlpha(wolf)) {
+            // Alpha-ulven findes først
+            if (wolfPack.isAlpha(wolf) && wolf.getEnergy() >= energyRequirement) {
                 alpha = wolf;
-            } else if (wolfPack.isPartOfPack(wolf) && mate == null) {
+            }
+            // Find en "partner", hvis partneren opfylder energikravet og alderskravet
+            else if (wolfPack.isPartOfPack(wolf)
+                    && wolf.getEnergy() >= energyRequirement
+                    && wolf.getAge() >= minAgeForReproduction
+                    && mate == null) {
                 mate = wolf; // Find den første mulige "mate" ulv
             }
         }
+
+        // Ekstra kontrol: Maksimum flokstørrelse
+        if (wolfPack != null && wolfPack.packSize() >= maxPackSize) {
+            System.out.println("Reproduction cannot occur. Pack size has reached the maximum limit (" + maxPackSize + ").");
+            return;
+        }
+
         // Reproduktion: Skal ske mellem alpha og en anden ulv
         if (alpha != null && mate != null) {
             // Generer en ny ulv med forældre i flokken
             Location emptyTile = findEmptyTileNearDen();
             if (emptyTile != null) {
                 Wolf newWolf = new Wolf(world, emptyTile, null, 0, wolfPack); // Nyfødt ulv med alder 0
-                wolfPack.addToPack(alpha, newWolf);
-                System.out.println("A new wolf (ID #" + newWolf.getId() + ") was born in the pack led by Wolf #" + alpha.getId());
+                wolfPack.addToPack(alpha, newWolf); // Tilføj den nye ulv til alpha's flok
+                System.out.println("A new wolf (ID #" + newWolf.getId() + ") was born in the pack led by Alpha Wolf #" + alpha.getId());
+
+                // Reducér energi for alpha og partner som "pris" for reproduktion
+                alpha.setEnergy(alpha.getEnergy() - 50);
+                mate.setEnergy(mate.getEnergy() - 50);
             } else {
                 System.out.println("No empty tile was found near the den to place the new wolf.");
             }
         } else {
-            System.out.println("Reproduction cannot occur. Conditions not met near the den.");
+            System.out.println("Reproduction cannot occur. Conditions are not met near the den (energy, age, or partner missing).");
         }
     }
 

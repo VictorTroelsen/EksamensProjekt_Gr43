@@ -52,7 +52,7 @@ public class FileReaderUtil {
             World w = p.getWorld();
 
             p.setDisplayInformation(Grass.class, new DisplayInformation(Color.GREEN, "grass"));
-            p.setDisplayInformation(Rabbit.class, new DisplayInformation(Color.GRAY, "rabbit-small"));
+            p.setDisplayInformation(Rabbit.class, new DisplayInformation(Color.GRAY, "rabbit-large"));
             p.setDisplayInformation(RabbitHole.class, new DisplayInformation(Color.RED, "hole-small"));
             p.setDisplayInformation(Bear.class, new DisplayInformation(Color.CYAN, "bear"));
             p.setDisplayInformation(Wolf.class, new DisplayInformation(Color.BLUE, "wolf"));

@@ -55,6 +55,9 @@ public class Rabbit extends Animal {//implements Actor {
 
         if (energy <= 0 || age == maximumAge()) {
             dies();
+            if (homeHole != null) {
+                world.delete(homeHole);
+            }
         }
 
 
@@ -121,7 +124,7 @@ public class Rabbit extends Animal {//implements Actor {
                         rabbitsInBurrow.add(this);
                         world.remove(this);
 
-                        program.setDisplayInformation(Rabbit.class, new DisplayInformation(Color.GRAY,"rabbit-small-sleeping"));
+                        program.setDisplayInformation(Rabbit.class, new DisplayInformation(Color.GRAY,"rabbit-large-sleeping"));
 
 
                         //System.out.println("Dyr.Rabbit moved to burrow at location: " + burrowLocation);
@@ -135,7 +138,7 @@ public class Rabbit extends Animal {//implements Actor {
     }
 
     private void sleepOutside() {
-        program.setDisplayInformation(Rabbit.class, new DisplayInformation(Color.GRAY,"rabbit-small-sleeping"));
+        program.setDisplayInformation(Rabbit.class, new DisplayInformation(Color.GRAY,"rabbit-large-sleeping"));
         //System.out.println("Dyr.Rabbit is sleeping outside at location: " + location);
     }
 
@@ -149,7 +152,7 @@ public class Rabbit extends Animal {//implements Actor {
                 // Fjern kaninen fra burrow track
                 rabbitsInBurrow.remove(this);
 
-                program.setDisplayInformation(Rabbit.class, new DisplayInformation(Color.GRAY,"rabbit-small"));
+                program.setDisplayInformation(Rabbit.class, new DisplayInformation(Color.GRAY,"rabbit-large"));
 
 
                 //System.out.println("Dyr.Rabbit left burrow and moved to location: " + exitLocation);

@@ -120,6 +120,14 @@ public class WolfPack {
         }
     }
 
+    public int packSize() {
+        int size = 0;
+        for (Set<Wolf> packMembers : packs.values()) {
+            size += packMembers.size();
+        }
+        return size;
+    }
+
     public boolean isAlpha(Wolf wolf) {
         return packs.containsKey(wolf);
     }
@@ -165,5 +173,9 @@ public class WolfPack {
         return false; // Ulven er ikke en del af nogen flok
     }
 
+
+    public Wolf getAlpha() {
+        return packs.keySet().stream().findFirst().orElse(null);
+    }
 
 }

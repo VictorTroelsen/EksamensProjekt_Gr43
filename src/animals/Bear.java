@@ -7,6 +7,7 @@ import itumulator.executable.Program;
 import itumulator.world.Location;
 import itumulator.world.World;
 
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -18,7 +19,7 @@ public class Bear extends Carnivore {
 
     public Bear(World world, Location initialLocation, Program program) {
         super(world, initialLocation, program);
-        this.energy = 100;
+        this.energy = 200;
         this.age = 0;
         this.isPlaced = placeAnimal(initialLocation);
         this.territoryCenter = initialLocation;
@@ -32,11 +33,13 @@ public class Bear extends Carnivore {
         energy -= 5; // Hver bevægelse koster energi
 
         // Bjørnen jager, hvis energien er lav
-        if (energy <= 50) {
-            hunt();
-            eatCarcass(this,location);
+        if (energy >= 30 && energy <= 100) {
+            forageBerries();
+            age++;
+        } else if (energy <= 30) {
+            hunt(30);
+            age++;
         }
-
         // Tjek om bjørnen skal dø
         if (energy <= 0) {
             dies();
@@ -75,6 +78,14 @@ public class Bear extends Carnivore {
     }
 
     @Override
+    protected boolean canHunt(Object prey) {
+        if (prey instanceof Wolf wolf) {
+            return age > 10 && (wolf.wolfPack == null || wolf.wolfPack.getPackMembers(wolf).size() <=2);
+        } else return prey instanceof Rabbit;
+    }
+
+
+    @Override
     protected Carcass createCarcass() {
         System.out.println(toString() + " turning into a large carcass.");
         return new NormalCarcass(world, location, program,false); // Eller en ny specific Carcass-type
@@ -86,7 +97,7 @@ public class Bear extends Carnivore {
         return dx * dx + dy * dy <= TERRITORY_RADIUS * TERRITORY_RADIUS; // Pythagoras' sætning
     }
 
-    @Override
+    /*@Override
     protected void hunt() {
         Set<Location> surroundingTiles = world.getSurroundingTiles(location, TERRITORY_RADIUS);
         for (Location loc : surroundingTiles) {
@@ -107,8 +118,12 @@ public class Bear extends Carnivore {
             }
         }
         System.out.println("No prey found near location: " + location);
-        forageBerries(); // Hvis ingen kaniner findes, så fourager bær
+        //forageBerries(); // Hvis ingen kaniner findes, så fourager bær
     }
+    */
+
+
+
 
     private void forageBerries() {
         Set<Location> surroundingTiles = world.getSurroundingTiles(location);

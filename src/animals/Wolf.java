@@ -5,26 +5,27 @@ import biodiversity.Carcass;
 import biodiversity.NormalCarcass;
 import itumulator.executable.Program;
 import itumulator.world.Location;
+import itumulator.world.NonBlocking;
 import itumulator.world.World;
 import actions.WolfPack;
 
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Wolf extends Carnivore{
+public class Wolf extends Carnivore {
     private static final AtomicInteger ID_GENERATOR = new AtomicInteger();
     private final int id;
     private int age;
     private int energy;
     private final World world;
-    private WolfPack wolfPack;
+    protected WolfPack wolfPack;
 
 
     public Wolf(World world, Location initialLocation, Program program, int age, WolfPack wolfPack) {
         super(world, initialLocation, program);
         this.id = ID_GENERATOR.incrementAndGet();
         this.age = age;
-        this.energy = 100;
+        this.energy = 150;
         this.isPlaced = placeAnimal(initialLocation);
         this.world = world;
         this.wolfPack = wolfPack;
@@ -43,6 +44,8 @@ public class Wolf extends Carnivore{
         }
 
         System.out.println("[DEBUG] Wolf #" + this.getId() + " starting act. Energy: " + this.getEnergy());
+
+        restNearDenIfNeeded();
 
         if (this.wolfPack == null) {
             System.out.println("[DEBUG] Wolf #" + this.getId() + " has no pack, trying to find or form one.");
@@ -84,7 +87,7 @@ public class Wolf extends Carnivore{
                     System.out.printf("[DEBUG] Wolf #%d is still solo and continues hunting.%n", this.getId());
                     move();
                     //moveRandomly();
-                    hunt();
+                    hunt(80);
                 }
             }
         } else if (wolfPack.isAlpha(this)) {
@@ -94,12 +97,27 @@ public class Wolf extends Carnivore{
         } else {
             // Hvis ulven er i en pack, men ikke alpha, udfører den jagt
             System.out.printf("[DEBUG] Wolf #%d is part of a pack but not alpha. Hunting solo.%n", this.getId());
-            hunt();
+            hunt(80);
         }
 
         decreaseEnergy(); // Reducer energi ved slutningen af handlingen
         System.out.println("[DEBUG] Wolf #" + this.getId() + " finished act.");
     }
+
+    @Override
+    protected boolean canHunt(Object prey) {
+        if (this.wolfPack == null) {
+            System.out.println("[DEBUG] Wolf #" + this.getId() + " has no pack and cannot hunt large prey.");
+            return prey instanceof Rabbit; // Ulven kan stadig jagte kaniner uden flokken
+        }
+
+        if (prey instanceof Bear) {
+            return wolfPack.getPackMembers(this).size() >= 5; // Ulve har brug for en flok på mindst 3 for at jage bjørne
+        } else {
+            return prey instanceof Rabbit;
+        }
+    }
+
 
     private Wolf findAlpha() {
         for (Wolf alpha : wolfPack.getAllAlphas()) {
@@ -117,9 +135,13 @@ public class Wolf extends Carnivore{
             return;
         }
 
-        // Hvis ingen WolfDen eksisterer for flokken, opret en ny hule
-        if (wolfPack != null && !wolfPack.hasDen()) {
-            createDenForPack(); // Opret hulen
+        // Forsøg at bygge en hule
+        createDenForPack();
+
+        // Udfør reproduktion, hvis en hule eksisterer
+        if (wolfPack != null && wolfPack.hasDen()) {
+            WolfDen den = wolfPack.getDen();
+            den.reproduce(80,10,2);
         }
 
         // Flyt flokken til en ny lokation
@@ -140,16 +162,14 @@ public class Wolf extends Carnivore{
 
     // Metode til at oprette en hule til flokken
     private void createDenForPack() {
-        Location currentLocation = world.getLocation(this); // Alpha'ens nuværende placering
-        if (currentLocation != null) {
-            // Opret hulen
-            WolfDen den = new WolfDen(world, currentLocation, wolfPack, program);
-            wolfPack.setDen(den); // Tilføj hulen til flokken
+        Location currentLocation = world.getLocation(this); // Alpha's nuværende placering
+        if (wolfPack != null && !wolfPack.hasDen() && currentLocation != null) {
+            WolfDen den = new WolfDen(world, currentLocation, wolfPack, program); // Opret hulen
+            wolfPack.setDen(den); // Sæt hulen til flokken
             world.setTile(currentLocation, den); // Tilføj hulen til verdenen
-
-            System.out.println("[DEBUG] Wolf #" + id + " has dug a den for the pack at location: " + currentLocation);
+            System.out.printf("[DEBUG] Wolf #%d has created a new den for the pack at location: %s%n", id, currentLocation);
         } else {
-            System.out.println("[DEBUG] Wolf #" + id + " could not create a den because no location was found.");
+            System.out.println("[DEBUG] Wolf #" + id + " could not create a den (location occupied or den already exists).");
         }
     }
 
@@ -169,7 +189,7 @@ public class Wolf extends Carnivore{
 
         if (packMembers.isEmpty()) {
             System.out.println("[DEBUG] No pack members left. Alpha Wolf #" + id + " hunting solo.");
-            hunt();
+            hunt(80);
             return;
         }
 
@@ -178,16 +198,49 @@ public class Wolf extends Carnivore{
         Location alphaLocation = world.getLocation(this);
         Set<Location> tiles = world.getSurroundingTiles(alphaLocation, 5);
         Set<Bear> bears = world.getAll(Bear.class, tiles);
+        Set<Rabbit> rabbits = world.getAll(Rabbit.class, tiles);
+
+        int totalEnergyGain = 0;
 
         if (!bears.isEmpty() && packMembers.size() >= 3) {
             Bear bear = bears.iterator().next();
             world.remove(bear);
-            this.energy += 100;
+            totalEnergyGain += 75;
             System.out.println("Wolf Pack led by #" + id + " hunted a bear!");
+            Object carcass = world.getTile(location);
+
+            // Spis ådslet for at øge energi
+            if (carcass instanceof Carcass) {
+                eatCarcass((Carcass) carcass, location);
+            }
+
+        } else if(!rabbits.isEmpty()){
+            Rabbit rabbit = rabbits.iterator().next();
+            world.remove(rabbit);
+            totalEnergyGain += 50;
+            System.out.println("Wolf Pack led by #" + id + " hunted a rabbit!");
+            Object carcass = world.getTile(location);
+
+            // Spis ådslet for at øge energi
+            if (carcass instanceof Carcass) {
+                eatCarcass((Carcass) carcass, location);
+            }
         } else {
             System.out.println("Not enough wolves to hunt larger prey. Continuing individual hunts...");
-            packMembers.forEach(Wolf::hunt);
+            //packMembers.forEach(Wolf::hunt);
+            for (Wolf wolf : packMembers) {
+                wolf.hunt(80);
+            }
+            return;
         }
+
+        int energyPerWolf = totalEnergyGain / packMembers.size() + 1;
+        for (Wolf wolf : packMembers) {
+            wolf.energy += energyPerWolf;
+            System.out.println("Wolf #" + wolf.getId() + " received " + energyPerWolf + " energy. New energy: " + wolf.getEnergy());
+        }
+        this.energy += energyPerWolf; // Tildel alpha sin andel
+        System.out.println("Alpha Wolf #" + id + " received " + energyPerWolf + " energy. New energy: " + this.energy);
     }
 
     private Location calculateNewLocation() {
@@ -198,7 +251,7 @@ public class Wolf extends Carnivore{
     }
 
     private void decreaseEnergy() {
-        this.energy -= 10; // Reducerer energi efter hver handling
+        this.energy -= 5; // Reducerer energi efter hver handling
 
         if (this.energy <= 0) {
             System.out.println("Wolf #" + id + " has died due to exhaustion.");
@@ -252,7 +305,7 @@ public class Wolf extends Carnivore{
         this.energy = energy;
     }
 
-    @Override
+    /*@Override
     protected void hunt() {
         if (!world.contains(this)) {
             System.out.println("[ERROR] Wolf ID #" + id + " is not on the map. Aborting hunt.");
@@ -286,6 +339,19 @@ public class Wolf extends Carnivore{
             //moveRandomly();
         }
     }
+    */
+
+    private void restNearDenIfNeeded() {
+        if (wolfPack != null && wolfPack.hasDen()) {
+            WolfDen den = wolfPack.getDen();
+            Location denLocation = den.getDenLocation();
+            Location currentLocation = world.getLocation(this);
+
+            if (denLocation != null && currentLocation != null) {
+                den.restNearDen();
+            }
+        }
+    }
 
     private void moveRandomly() {
         Set<Location> emptyLocations = world.getEmptySurroundingTiles(world.getCurrentLocation());
@@ -299,9 +365,12 @@ public class Wolf extends Carnivore{
         }
     }
 
-
-
-
+    public Wolf getAlpha() {
+        if (wolfPack != null) {
+            return wolfPack.getAlpha();
+        }
+        return null; // Hvis ulven ikke er en del af en flok
+    }
 
     @Override
     public String toString() {

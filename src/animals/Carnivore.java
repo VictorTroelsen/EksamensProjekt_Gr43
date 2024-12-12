@@ -8,7 +8,7 @@ import itumulator.world.World;
 
 import java.util.Set;
 
-abstract class Carnivore extends Animal {
+public abstract class Carnivore extends Animal {
 
     public Carnivore(World world, Location initiallocation, Program program) {
         super(world, initiallocation, program);
@@ -21,9 +21,14 @@ abstract class Carnivore extends Animal {
 
     public abstract void act(World world);
 
-    protected void hunt() {
+    protected void hunt(int energyThreshold) {
+        if (this.energy >= energyThreshold) {
+            System.out.println(this + " has sufficient energy (" + this.energy + "), no need to hunt.");
+            return;
+        }
+
         // Få omkringliggende felter i nærheden af rovdyrets position
-        Set<Location> surroundingTiles = world.getSurroundingTiles(location, program.getSize() / 5);
+        Set<Location> surroundingTiles = world.getSurroundingTiles(location, 5);
         for (Location loc : surroundingTiles) {
             Object prey = world.getTile(loc); // Få objektet på feltet
 
@@ -63,11 +68,16 @@ abstract class Carnivore extends Animal {
 
     public void eatCarcass(Carcass carcass, Location loc) {
         System.out.println(this + " is eating a carcass at location: " + loc);
-
-        if (carcass instanceof Carcass) {
-            energy += carcass.getNourishment(); // Tilføj energi fra ådslet
-            world.delete(carcass); // Fjern ådslet fra verdenen
-            System.out.println(this + " has eaten the carcass and now has energy: " + energy);
+        if (carcass == null) {
+            System.err.println("Carcass is null.");
         }
+        System.out.println(carcass.getNourishment());
+        energy += carcass.getNourishment(); // Tilføj energi fra ådslet
+        world.delete(carcass); // Fjern ådslet fra verdenen
+        System.out.println(this + " has eaten the carcass and now has energy: " + energy);
+
+    }
+
+    public void setEnergy(int i) {
     }
 }

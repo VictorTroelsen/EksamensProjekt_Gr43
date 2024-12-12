@@ -7,7 +7,7 @@ import itumulator.executable.DisplayInformation;
 import java.awt.*;
 
 public class SmallCarcass extends Carcass {
-    private static final int SMALL_CARCASS_NOURISHMENT = 10;
+    private static final int SMALL_CARCASS_NOURISHMENT = 30;
 
 
     public SmallCarcass(World world, Location location, Program program) {

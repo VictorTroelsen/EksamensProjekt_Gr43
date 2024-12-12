@@ -54,7 +54,7 @@ public class Animal implements Actor {
     }
 
     public void dies() {
-        System.out.println("died at location: " + location);
+        System.out.println(this + " died at location: " + location);
 
         // First, remove the animal from the world and clear the tile
         world.delete(this); // Removes the Rabbit from entities and clears the tile
