@@ -9,7 +9,7 @@ public class Main {
 
     public static void main(String[] args) {
         String directoryPath = "week-3";
-        String specificFileName = "tf3-3ab.txt";
+        String specificFileName = "t3-2ab.txt";
 
         try {
 

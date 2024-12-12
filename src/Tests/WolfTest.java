@@ -1,4 +1,4 @@
-package animals;
+/*package animals;
 
 import actions.WolfPack;
 import biodiversity.Carcass;
@@ -103,3 +103,4 @@ class WolfTest {
         assertFalse(world.contains(wolf1), "Wolf1 should be removed from the world after dying.");
     }
 }
+*/

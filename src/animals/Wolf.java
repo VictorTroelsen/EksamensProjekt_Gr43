@@ -163,7 +163,7 @@ public class Wolf extends Carnivore {
     // Metode til at oprette en hule til flokken
     private void createDenForPack() {
         Location currentLocation = world.getLocation(this); // Alpha's nuværende placering
-        if (wolfPack != null && !wolfPack.hasDen() && currentLocation != null) {
+        if (wolfPack != null && !wolfPack.hasDen() && currentLocation != null && !world.containsNonBlocking(currentLocation)) {
             WolfDen den = new WolfDen(world, currentLocation, wolfPack, program); // Opret hulen
             wolfPack.setDen(den); // Sæt hulen til flokken
             world.setTile(currentLocation, den); // Tilføj hulen til verdenen

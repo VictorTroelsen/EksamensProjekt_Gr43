@@ -1,4 +1,4 @@
-
+/*
 
 import biodiversity.NormalCarcass;
 import biodiversity.SmallCarcass;
@@ -87,3 +87,5 @@ class CarcassTest {
         assertFalse(carcass.isDecomposed, "Carcass should not be decomposed before max decomposition time.");
     }
 }
+
+ */

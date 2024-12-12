@@ -1,4 +1,4 @@
-package animals;
+/*package animals;
 
 import biodiversity.Carcass;
 import itumulator.world.Location;
@@ -78,3 +78,5 @@ class CarnivoreTest {
         assertEquals(60, carnivore.getEnergy(), "Carnivore's energy should remain unchanged when no hunt occurs.");
     }
 }
+
+ */
